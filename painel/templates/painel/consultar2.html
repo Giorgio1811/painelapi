@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pulse FX | Painel de Cotações</title>
+    <style>
+        :root {
+            --bg: #f3f6fb;
+            --surface: #ffffff;
+            --surface-muted: #edf2f8;
+            --text: #152238;
+            --muted: #64748b;
+            --primary: #365cf5;
+            --primary-dark: #2444c9;
+            --success: #07805b;
+            --danger: #b42318;
+            --border: #dce4ef;
+            --shadow: 0 20px 50px rgba(31, 51, 84, 0.12);
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            background: radial-gradient(circle at 10% 0%, #dce8ff, transparent 38%), var(--bg);
+            color: var(--text);
+            font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        }
+
+        button, input { font: inherit; }
+        button { cursor: pointer; }
+
+        .shell { max-width: 1180px; margin: 0 auto; padding: 28px 22px 48px; }
+        .topbar, .brand, .actions, .metric, .section-heading, .search-box, .record {
+            display: flex;
+            align-items: center;
+        }
+        .topbar { justify-content: space-between; gap: 20px; margin-bottom: 42px; }
+        .brand { gap: 12px; }
+        .logo {
+            display: grid;
+            width: 42px;
+            height: 42px;
+            place-items: center;
+            border-radius: 14px;
+            background: var(--primary);
+            color: white;
+            font-size: 21px;
+            font-weight: 800;
+            box-shadow: 0 10px 24px rgba(54, 92, 245, 0.28);
+        }
+        .brand strong { display: block; font-size: 17px; letter-spacing: -0.02em; }
+        .brand small { color: var(--muted); }
+        .actions { gap: 10px; }
+        .icon-button, .primary-button {
+            border: 0;
+            border-radius: 12px;
+            padding: 11px 15px;
+            transition: transform .2s, background .2s, box-shadow .2s;
+        }
+        .icon-button { background: var(--surface); color: var(--text); box-shadow: 0 5px 16px rgba(31, 51, 84, .07); }
+        .primary-button { background: var(--primary); color: white; font-weight: 700; }
+        .primary-button:hover, .icon-button:hover { transform: translateY(-2px); }
+        .primary-button:hover { background: var(--primary-dark); box-shadow: 0 8px 18px rgba(54, 92, 245, .25); }
+
+        .hero { display: grid; grid-template-columns: 1.15fr .85fr; gap: 22px; margin-bottom: 22px; }
+        .hero-copy, .spotlight, .history-panel { border: 1px solid var(--border); border-radius: 24px; box-shadow: var(--shadow); }
+        .hero-copy { padding: clamp(26px, 5vw, 52px); background: linear-gradient(135deg, #162e63, #3560d7); color: white; }
+        .eyebrow { color: #b9c9ff; font-size: 12px; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; }
+        h1 { max-width: 560px; margin: 13px 0 15px; font-size: clamp(32px, 5vw, 58px); letter-spacing: -.06em; line-height: .98; }
+        .hero-copy p { max-width: 490px; margin: 0; color: #d7e2ff; line-height: 1.6; }
+        .spotlight { display: flex; flex-direction: column; justify-content: space-between; gap: 25px; padding: 28px; background: var(--surface); }
+        .spotlight form { display: grid; gap: 14px; width: 100%; }
+        .custom-query { display: grid; gap: 7px; margin: 0; }
+        .custom-query label { color: var(--muted); font-size: 12px; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; }
+        .custom-query input { width: 100%; padding: 11px 12px; border: 1px solid var(--border); border-radius: 10px; outline: 0; color: var(--text); background: var(--surface-muted); }
+        .custom-query input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(54, 92, 245, .12); }
+        .custom-query small { color: var(--muted); font-size: 11px; }
+        .custom-error { margin: 0; color: var(--danger); font-size: 12px; }
+        .spotlight form .primary-button { justify-self: start; }
+        .spotlight-top { display: flex; justify-content: space-between; color: var(--muted); font-size: 13px; font-weight: 700; }
+        .live { color: var(--success); }
+        .live::before { content: ""; display: inline-block; width: 7px; height: 7px; margin-right: 6px; border-radius: 50%; background: currentColor; vertical-align: 1px; }
+        .pair { color: var(--muted); font-size: 15px; font-weight: 700; letter-spacing: .08em; }
+        .quote { margin: 8px 0 4px; font-size: clamp(38px, 5vw, 64px); letter-spacing: -.06em; }
+        .quote-prefix { color: var(--muted); font-size: 18px; font-weight: 700; }
+        .quote-note { color: var(--muted); font-size: 13px; }
+
+        .metric-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-bottom: 22px; }
+        .metric { gap: 12px; min-height: 86px; padding: 17px 19px; border: 1px solid var(--border); border-radius: 17px; background: rgba(255,255,255,.72); }
+        .metric-icon { display: grid; width: 36px; height: 36px; place-items: center; border-radius: 11px; background: var(--surface-muted); color: var(--primary); font-weight: 800; }
+        .metric strong, .metric span { display: block; }
+        .metric strong { font-size: 19px; }
+        .metric span { color: var(--muted); font-size: 12px; }
+
+        .history-panel { padding: 25px; background: var(--surface); }
+        .section-heading { justify-content: space-between; gap: 18px; margin-bottom: 20px; }
+        h2 { margin: 0; font-size: 22px; letter-spacing: -.04em; }
+        .section-heading p { margin: 5px 0 0; color: var(--muted); font-size: 13px; }
+        .search-box { gap: 8px; padding: 9px 13px; border: 1px solid var(--border); border-radius: 11px; color: var(--muted); }
+        .search-box input { width: 130px; border: 0; outline: 0; color: var(--text); background: transparent; }
+        .records { display: grid; gap: 9px; }
+        .record { justify-content: space-between; gap: 16px; padding: 14px 16px; border: 1px solid var(--border); border-radius: 14px; }
+        .record-main { display: flex; align-items: center; gap: 12px; }
+        .record-symbol { display: grid; width: 38px; height: 38px; place-items: center; border-radius: 12px; background: #e6ecff; color: var(--primary); font-size: 12px; font-weight: 800; }
+        .record strong, .record small { display: block; }
+        .record small { margin-top: 3px; color: var(--muted); }
+        .record-value { font-weight: 800; }
+        .record-tag { display: inline-block; margin-left: 6px; padding: 3px 6px; border-radius: 5px; color: var(--primary); background: #e6ecff; font-size: 10px; font-weight: 800; text-transform: uppercase; }
+        .empty, .error { padding: 26px; border-radius: 14px; text-align: center; }
+        .empty { color: var(--muted); background: var(--surface-muted); }
+        .error { color: var(--danger); background: #fff0ef; }
+        .chart-panel { margin-bottom: 22px; padding: 25px; border: 1px solid var(--border); border-radius: 24px; background: var(--surface); box-shadow: var(--shadow); }
+        .chart-meta { display: flex; flex-wrap: wrap; gap: 9px; }
+        .chart-badge { display: flex; flex-direction: column; gap: 2px; min-width: 142px; padding: 7px 10px; border-radius: 9px; color: var(--muted); background: var(--surface-muted); font-size: 12px; }
+        .chart-badge-label { font-size: 11px; font-weight: 700; text-transform: uppercase; }
+        .chart-badge strong { color: var(--text); }
+        .chart-badge time { color: var(--muted); font-size: 11px; }
+        .chart-badge.minimum strong { color: #b45309; }
+        .chart-badge.maximum strong { color: var(--success); }
+        .chart-wrap { position: relative; overflow-x: auto; margin-top: 8px; }
+        .chart { display: block; width: 100%; min-width: 580px; height: 280px; }
+        .chart-grid { stroke: var(--border); stroke-dasharray: 4 5; }
+        .chart-axis-label { fill: var(--muted); font-size: 11px; }
+        .chart-line { fill: none; stroke: var(--primary); stroke-linecap: round; stroke-linejoin: round; stroke-width: 3; }
+        .chart-area { fill: url(#chart-fill); opacity: .8; }
+        .chart-point { cursor: pointer; fill: var(--primary); stroke: var(--surface); stroke-width: 3; transition: r .2s; }
+        .chart-point:hover { r: 8; }
+        .chart-point.minimum { fill: #f59e0b; }
+        .chart-point.maximum { fill: var(--success); }
+        .chart-point.minimum.maximum { fill: #7c3aed; }
+        .chart-point.personalized { stroke: #7c3aed; stroke-dasharray: 2 2; }
+        .chart-legend { display: flex; gap: 16px; margin-top: 4px; color: var(--muted); font-size: 12px; }
+        .chart-legend span::before { content: ""; display: inline-block; width: 8px; height: 8px; margin-right: 5px; border-radius: 50%; background: var(--primary); }
+        .chart-legend .legend-min::before { background: #f59e0b; }
+        .chart-legend .legend-max::before { background: var(--success); }
+        .toast { position: fixed; right: 22px; bottom: 22px; max-width: 320px; padding: 13px 17px; border-radius: 12px; color: white; background: #1d2939; box-shadow: var(--shadow); transform: translateY(120px); transition: transform .25s; }
+        .toast.show { transform: translateY(0); }
+
+        body.dark { --bg: #0e1626; --surface: #172235; --surface-muted: #22304a; --text: #eff5ff; --muted: #a7b5ca; --border: #2b3a54; --shadow: 0 20px 50px rgba(0,0,0,.2); }
+        body.dark .metric { background: rgba(23,34,53,.8); }
+        body.dark .record-symbol { background: #263a75; }
+        body.dark .empty { background: var(--surface-muted); }
+
+        @media (max-width: 760px) {
+            .topbar { align-items: flex-start; }
+            .hero { grid-template-columns: 1fr; }
+            .metric-row { grid-template-columns: 1fr; }
+            .section-heading { align-items: flex-start; flex-direction: column; }
+            .search-box, .search-box input { width: 100%; }
+        }
+    </style>
+</head>
+<body>
+    <main class="shell">
+        <header class="topbar">
+            <div class="brand">
+                <div class="logo">↗</div>
+                <div><strong>Pulse FX</strong><small>Monitor de mercado</small></div>
+            </div>
+            <div class="actions">
+                <button class="icon-button" id="theme-button" type="button" aria-label="Alternar tema">☾ Tema</button>
+                <button class="primary-button" id="refresh-button" type="button">↻ Atualizar</button>
+            </div>
+        </header>
+
+        <section class="hero">
+            <div class="hero-copy">
+                <div class="eyebrow">Cotação em tempo real</div>
+                <h1>Decisões melhores começam com bons dados.</h1>
+                <p>Acompanhe o dólar comercial em uma visão rápida, limpa e feita para consultar quando precisar.</p>
+            </div>
+            <div class="spotlight">
+                <div class="spotlight-top"><span>USD / BRL</span><span class="live">Atualizado</span></div>
+                <div>
+                    <div class="pair">VALOR DE COMPRA</div>
+                    <div class="quote"><span class="quote-prefix">R$</span> <span id="current-value">{% if sucesso %}{{ registro.valor }}{% else %}--{% endif %}</span></div>
+                    <div class="quote-note" id="last-update">{% if sucesso %}Consulta registrada agora{% else %}Nenhuma consulta disponível{% endif %}</div>
+                </div>
+                <form id="quote-form" method="get" action="{% url 'consultar2' %}">
+                    <div class="custom-query">
+                        <label for="custom-date">Consultar uma data específica</label>
+                        <input id="custom-date" name="data_consulta" type="text" inputmode="numeric" placeholder="DD/MM/AAAA" maxlength="10" value="{{ data_consulta|default:'' }}">
+                        <small>Disponível entre hoje e os últimos 6 meses.</small>
+                    </div>
+                    {% if erro %}<p class="custom-error" role="alert">{{ erro }}</p>{% endif %}
+                    <button class="primary-button" id="new-query" type="submit">Consultar cotação agora</button>
+                </form>
+            </div>
+        </section>
+
+        <section class="metric-row" aria-label="Resumo">
+            <div class="metric"><div class="metric-icon">#</div><div><strong id="total-count">--</strong><span>consultas salvas</span></div></div>
+            <div class="metric"><div class="metric-icon">↗</div><div><strong>USD/BRL</strong><span>par monitorado</span></div></div>
+            <div class="metric"><div class="metric-icon">◷</div><div><strong>5s</strong><span>tempo limite da API</span></div></div>
+        </section>
+
+        <section class="chart-panel" aria-labelledby="chart-title">
+            <div class="section-heading">
+                <div><h2 id="chart-title">Pulso das últimas consultas</h2><p>Linha do tempo com as 10 consultas mais recentes.</p></div>
+                <div class="chart-meta">
+                    <span class="chart-badge minimum">
+                        <span class="chart-badge-label">Menor valor</span>
+                        <strong id="minimum-value">--</strong>
+                        <time id="minimum-date">--</time>
+                    </span>
+                    <span class="chart-badge maximum">
+                        <span class="chart-badge-label">Maior valor</span>
+                        <strong id="maximum-value">--</strong>
+                        <time id="maximum-date">--</time>
+                    </span>
+                </div>
+            </div>
+            <div class="chart-wrap">
+                <svg id="quote-chart" class="chart" viewBox="0 0 760 280" role="img" aria-labelledby="chart-title chart-description">
+                    <desc id="chart-description">Gráfico de linha das últimas consultas de dólar.</desc>
+                </svg>
+            </div>
+            <div class="chart-legend"><span>Valor consultado</span><span class="legend-min">Menor valor</span><span class="legend-max">Maior valor</span></div>
+        </section>
+
+        <section class="history-panel">
+            <div class="section-heading">
+                <div><h2>Atividade recente</h2><p>Suas últimas consultas aparecem aqui automaticamente.</p></div>
+                <label class="search-box" for="search"><span>⌕</span><input id="search" type="search" placeholder="Filtrar histórico"></label>
+            </div>
+            <div id="records" class="records" aria-live="polite"><div class="empty">Carregando seu histórico...</div></div>
+        </section>
+    </main>
+    <div id="toast" class="toast" role="status"></div>
+    {% if erro %}<div id="server-error" data-message="{{ erro|escape }}"></div>{% endif %}
+
+    <script>
+        const records = document.getElementById('records');
+        const search = document.getElementById('search');
+        const toast = document.getElementById('toast');
+        const totalCount = document.getElementById('total-count');
+        const chart = document.getElementById('quote-chart');
+        const minimumValue = document.getElementById('minimum-value');
+        const maximumValue = document.getElementById('maximum-value');
+        const minimumDate = document.getElementById('minimum-date');
+        const maximumDate = document.getElementById('maximum-date');
+        let history = [];
+
+        function showToast(message) {
+            toast.textContent = message;
+            toast.classList.add('show');
+            window.setTimeout(() => toast.classList.remove('show'), 3200);
+        }
+
+        function renderHistory() {
+            const query = search.value.trim().toLowerCase();
+            const visible = history.filter((item) => `${item.moeda_origem}/${item.moeda_destino}`.toLowerCase().includes(query));
+            totalCount.textContent = history.length;
+            if (!visible.length) {
+                const empty = document.createElement('div');
+                empty.className = 'empty';
+                empty.textContent = history.length ? 'Nenhum resultado para esse filtro.' : 'Nenhuma consulta registrada ainda.';
+                records.replaceChildren(empty);
+                return;
+            }
+            records.replaceChildren(...visible.map((item) => {
+                const article = document.createElement('article');
+                article.className = 'record';
+                const main = document.createElement('div');
+                main.className = 'record-main';
+                const symbol = document.createElement('div');
+                symbol.className = 'record-symbol';
+                symbol.textContent = item.moeda_origem;
+                const details = document.createElement('div');
+                const pair = document.createElement('strong');
+                pair.textContent = `${item.moeda_origem} / ${item.moeda_destino}`;
+                if (item.consulta_personalizada) {
+                    const tag = document.createElement('span');
+                    tag.className = 'record-tag';
+                    tag.textContent = 'Personalizada';
+                    pair.appendChild(tag);
+                }
+                const date = document.createElement('small');
+                date.textContent = item.consulta_personalizada && item.data_consulta
+                    ? `Data consultada: ${new Date(`${item.data_consulta}T12:00:00`).toLocaleDateString('pt-BR')} • registrada em ${new Date(item.data_hora_consulta).toLocaleString('pt-BR')}`
+                    : new Date(item.data_hora_consulta).toLocaleString('pt-BR');
+                details.append(pair, date);
+                main.append(symbol, details);
+                const value = document.createElement('div');
+                value.className = 'record-value';
+                value.textContent = `R$ ${item.valor}`;
+                article.append(main, value);
+                return article;
+            }));
+        }
+
+        function svgElement(name, attributes) {
+            const element = document.createElementNS('http://www.w3.org/2000/svg', name);
+            Object.entries(attributes).forEach(([key, value]) => element.setAttribute(key, value));
+            return element;
+        }
+
+        function consultationDate(point) {
+            if (point.data_consulta) {
+                const [year, month, day] = point.data_consulta.split('-');
+                return `${day}/${month}/${year}`;
+            }
+            return new Date(point.data_hora_consulta).toLocaleDateString('pt-BR');
+        }
+
+        function renderChart() {
+            chart.querySelectorAll('.dynamic-chart-element').forEach((element) => element.remove());
+            const personalized = history
+                .filter((point) => point.consulta_personalizada)
+                .slice(0, 1);
+            const regular = history
+                .filter((point) => !point.consulta_personalizada)
+                .slice(0, personalized.length ? 9 : 10)
+                .reverse();
+            const points = regular.concat(personalized);
+            if (!points.length) {
+                minimumValue.textContent = '--';
+                maximumValue.textContent = '--';
+                minimumDate.textContent = '--';
+                maximumDate.textContent = '--';
+                return;
+            }
+
+            const values = points.map((point) => Number(point.valor));
+            const minimum = Math.min(...values);
+            const maximum = Math.max(...values);
+            const minimumPoint = points.find((point) => Number(point.valor) === minimum);
+            const maximumPoint = points.find((point) => Number(point.valor) === maximum);
+            const range = maximum - minimum || 0.01;
+            const width = 760;
+            const height = 280;
+            const padding = { top: 24, right: 24, bottom: 38, left: 52 };
+            const plotWidth = width - padding.left - padding.right;
+            const plotHeight = height - padding.top - padding.bottom;
+            const x = (index) => padding.left + (points.length === 1 ? plotWidth / 2 : (index / (points.length - 1)) * plotWidth);
+            const y = (value) => padding.top + plotHeight - ((value - minimum) / range) * plotHeight;
+
+            minimumValue.textContent = `R$ ${minimum.toFixed(4)}`;
+            maximumValue.textContent = `R$ ${maximum.toFixed(4)}`;
+            minimumDate.textContent = consultationDate(minimumPoint);
+            maximumDate.textContent = consultationDate(maximumPoint);
+
+            const group = svgElement('g', { class: 'dynamic-chart-element' });
+            const definitions = svgElement('defs', {});
+            const gradient = svgElement('linearGradient', { id: 'chart-fill', x1: '0', y1: '0', x2: '0', y2: '1' });
+            gradient.append(
+                svgElement('stop', { offset: '0%', 'stop-color': '#365cf5', 'stop-opacity': '.28' }),
+                svgElement('stop', { offset: '100%', 'stop-color': '#365cf5', 'stop-opacity': '0' })
+            );
+            definitions.appendChild(gradient);
+            group.appendChild(definitions);
+            [0, .5, 1].forEach((ratio) => {
+                const lineY = padding.top + plotHeight * ratio;
+                group.appendChild(svgElement('line', {
+                    class: 'chart-grid', x1: padding.left, y1: lineY, x2: width - padding.right, y2: lineY
+                }));
+                const label = svgElement('text', {
+                    class: 'chart-axis-label', x: padding.left - 10, y: lineY + 4, 'text-anchor': 'end'
+                });
+                label.textContent = `R$ ${(maximum - (maximum - minimum) * ratio).toFixed(4)}`;
+                group.appendChild(label);
+            });
+
+            const coordinates = points.map((point, index) => `${x(index)},${y(Number(point.valor))}`);
+            const area = `${padding.left},${padding.top + plotHeight} ${coordinates.join(' ')} ${x(points.length - 1)},${padding.top + plotHeight}`;
+            group.appendChild(svgElement('polygon', { class: 'chart-area', points: area }));
+            group.appendChild(svgElement('polyline', { class: 'chart-line', points: coordinates.join(' ') }));
+
+            points.forEach((point, index) => {
+                const value = Number(point.valor);
+                const markerClass = value === minimum && value === maximum ? ' minimum maximum' : value === minimum ? ' minimum' : value === maximum ? ' maximum' : '';
+                const circle = svgElement('circle', {
+                    class: `chart-point${markerClass}${point.consulta_personalizada ? ' personalized' : ''}`,
+                    cx: x(index), cy: y(value), r: 5
+                });
+                const title = document.createElementNS('http://www.w3.org/2000/svg', 'title');
+                const dateLabel = point.consulta_personalizada && point.data_consulta
+                    ? `Data consultada: ${new Date(`${point.data_consulta}T12:00:00`).toLocaleDateString('pt-BR')}`
+                    : new Date(point.data_hora_consulta).toLocaleString('pt-BR');
+                title.textContent = `${point.consulta_personalizada ? 'Consulta personalizada' : 'Consulta'} - ${dateLabel} - R$ ${point.valor}`;
+                circle.appendChild(title);
+                group.appendChild(circle);
+            });
+            chart.appendChild(group);
+        }
+
+        function loadHistory() {
+            records.innerHTML = '<div class="empty">Atualizando histórico...</div>';
+            fetch('/api/historico/')
+                .then((response) => {
+                    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                    return response.json();
+                })
+                .then((data) => { history = data; renderChart(); renderHistory(); })
+                .catch((error) => {
+                    records.innerHTML = '<div class="error">Não foi possível carregar o histórico agora.</div>';
+                    showToast('Falha ao atualizar. Verifique sua conexão.');
+                    console.error('Falha ao buscar histórico:', error);
+                });
+        }
+
+        document.getElementById('refresh-button').addEventListener('click', () => {
+            loadHistory();
+            showToast('Histórico atualizado.');
+        });
+        document.getElementById('custom-date').addEventListener('input', (event) => {
+            const digits = event.target.value.replace(/\D/g, '').slice(0, 8);
+            event.target.value = digits
+                .replace(/(\d{2})(\d)/, '$1/$2')
+                .replace(/(\d{2}\/\d{2})(\d)/, '$1/$2');
+        });
+        document.getElementById('theme-button').addEventListener('click', () => {
+            document.body.classList.toggle('dark');
+            localStorage.setItem('pulse-theme', document.body.classList.contains('dark') ? 'dark' : 'light');
+        });
+        search.addEventListener('input', renderHistory);
+        if (localStorage.getItem('pulse-theme') === 'dark') document.body.classList.add('dark');
+        const serverError = document.getElementById('server-error');
+        if (serverError) showToast(serverError.dataset.message);
+        loadHistory();
+    </script>
+</body>
+</html>
